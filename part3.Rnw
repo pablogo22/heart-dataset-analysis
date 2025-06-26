@@ -1,0 +1,103 @@
+\section{Statistical Analysis}
+
+\subsection{Model fitting}
+As previously explained, we will fit a logistic regression model using the 
+variable \texttt{class} as the response variable, and all the remaining 
+variables as predictors. We show the summary of the fitted model:
+
+{\scriptsize
+<<echo=TRUE,prompt=TRUE,comment=NA>>=
+modelo_log <- glm(class ~ ., data = heart, family = binomial)
+summary(modelo_log)
+@
+}
+
+The summary output shows that the first step of the logistic regression model is 
+to compute the linear predictor:
+
+\begin{align*}
+z &= -6.03 
+- 0.014 \cdot \text{age} 
++ 1.55 \cdot \text{sex} 
++ 1.24 \cdot \text{cp}_2 
++ 0.25 \cdot \text{cp}_3 
++ 2.09 \cdot \text{cp}_4 
++ 0.024 \cdot \text{trestbps}\\
+&+ 0.004 \cdot \text{chol} 
+- 0.60 \cdot \text{fbs} 
++ 0.81 \cdot \text{restecg}_1 
++ 0.47 \cdot \text{restecg}_2 
+- 0.018 \cdot \text{thalach} 
++ 0.71 \cdot \text{exang} \\
+& + 0.36 \cdot \text{oldpeak} 
++ 1.16 \cdot \text{slope}_2 
++ 0.53 \cdot \text{slope}_3 
++ 1.31 \cdot \text{ca} 
+- 0.011 \cdot \text{thal}_6 
++ 1.39 \cdot \text{thal}_7,
+\end{align*}
+
+Once this linear combination $z$ is calculated, it is transformed using the 
+logistic function, which gives the estimated probability $\hat{p}$ that 
+\texttt{class = 1}. If $\hat{p} > 0.5$, the model predicts \texttt{class = 1}. 
+Otherwise, it predicts \texttt{class=0}.
+
+In the previous expression, categorical variables with multiple categories—such as \texttt{cp}, \texttt{restecg}, \texttt{slope}, and \texttt{thal}—are represented by separate 
+binary variables that indicate the presence of each category (except the baseline one). 
+For example, $\text{cp}_2 = 1$ if \texttt{cp} equals 2, and 0 otherwise. Similarly, 
+$\text{cp}_3=1$ if \texttt{cp} equals 3, and so on. The category not shown 
+(in this case, \texttt{cp} = 1) serves as the reference category.
+ 
+Logical variables like \texttt{sex}, \texttt{fbs}, and \texttt{exang} are coded 
+as 1 when \texttt{TRUE}, and 0 when \texttt{FALSE}.
+
+\subsection{Interpretation of coefficients}
+As we explained before, a positive coefficient means that the variable increases the probability that \texttt{class = 1} (i.e., the person has heart disease), while a negative coefficient means it decreases that probability. For example, higher values of \texttt{ca} increase the probability of having heart disease, while higher values of \texttt{thalach} decrease it.
+
+For categorical variables, the coefficient shows the effect of each category compared to a reference category. A positive value means a person in that category is more likely to have heart disease than someone in the reference category, and a negative value means they are less likely to have heart disease.
+
+\subsection{Goodness of the fit}
+The \texttt{summary} function provides some indicators of the model's fit, such as:
+
+\begin{itemize}
+\item Null deviance: Measures the fit of a model with only the intercept.
+\item Residual deviance: Measures the fit of the current model with predictors.
+\item AIC (Akaike Information Criterion): Balances model fit and complexity; lower is better.
+\end{itemize}
+
+Although the residual deviance is much lower than the null deviance — suggesting 
+that the model fits the data better than a model with no predictors — these values 
+are mainly useful for comparing models. They do not directly measure predictive 
+performance. Therefore, we also compute metrics such as \texttt{accuracy} and 
+the \texttt{confusion matrix} to evaluate how well the model classifies observations.
+
+
+{\footnotesize
+<<echo=TRUE,prompt=TRUE,comment=NA, warning=FALSE>>=
+probabilidades <- predict(modelo_log, type = "response")
+pred_clase <- ifelse(probabilidades >= 0.5, 1, 0)
+real <- heart$class
+
+accuracy <- mean(pred_clase == real)
+print(paste("Accuracy:", round(accuracy, 4)))
+
+confusion_matrix <- table(Predicted = pred_clase, Actual = heart$class)
+print(confusion_matrix)
+@
+}
+
+The confusion matrix shows that the model correctly classified $146$ individuals 
+without heart disease and $113$ individuals with heart disease. It misclassified 
+$14$ cases as having the disease when they did not (false positives), and $24$ cases 
+as not having the disease when they actually did (false negatives). 
+With an overall accuracy of $87.21\%$, the model demonstrates good predictive 
+performance.
+
+
+
+\subsection{Basic inference}
+We assess the statistical significance of each predictor using the $\mathrm{Pr}(>|z|)$ values from the model summary. At a significance level of $0.001$, the only significant variable is \texttt{ca}, indicating a strong association with the response variable.
+
+If we increase the significance level to $0.01$, additional variables become significant: \texttt{sex}, \texttt{cp4}, and \texttt{thal7}, suggesting moderate evidence of their effect on the probability of heart disease.
+
+At a $0.05$ level, even more variables show significance: the intercept, \texttt{trestbps}, and \texttt{slope2}, meaning that these predictors also contribute meaningfully to the model.

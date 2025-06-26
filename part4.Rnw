@@ -1,0 +1,128 @@
+\subsection{Model diagnostics}
+
+{\footnotesize
+<<echo=FALSE,prompt=TRUE,comment=NA, fig.width=5, fig.height=4>>=
+#linear_predictor <- predict(modelo_log, type = "link")
+
+#plot(linear_predictor, modelo_log$residuals, main='Standardized residuals for each fitted value', xlab='Fitted values', ylab='Standardized residuals', pch=21, bg='cyan')
+@
+}
+
+Now, we perform model diagnostics to determine if the assumptions associated with the logistic regression are met. We begin by looking at the residual plot. 
+
+{\footnotesize
+<<echo=TRUE,prompt=TRUE,comment=NA, fig.width=4, fig.height=3>>=
+plot(modelo_log, which=1)
+@
+}
+
+As we can see, it is not very helpful when used with the logistic regression. The following is an excerpt from the documentation of the binned residual plot from the \texttt{arm} package. 
+\begin{quote}
+In logistic regression, as with linear regression, the residuals can be defined as observed minus expected values. The data are discrete and so are the residuals. As a result, plots of raw residuals from logistic regression are generally not useful. The binned residuals plot instead, after dividing the data into categories (bins) based on their fitted values, plots the average residual versus the average fitted value for each bin.
+\end{quote}
+
+{\footnotesize
+<<echo=TRUE, message = FALSE,warning=FALSE, fig.width=4, fig.height=3>>=
+library(arm)
+
+binnedplot(fitted(modelo_log), residuals(modelo_log, type = "response"), 
+           nclass = NULL, xlab = "Expected Values", ylab = "Average residual", 
+           main = "Binned residual plot", cex.pts = 0.8, col.pts = 1,col.int = "gray")
+@
+}
+
+The grey lines indicate $\pm 2$ standard-error bounds. If the model is true, then it is expected that $95\%$ of the data should be contained inside. As such, the binned plot above suggests that our model is reasonable enough. 
+Next, we verify the normality of the residuals with \texttt{qqnorm} and \texttt{qqline}. 
+
+{\footnotesize
+<<echo=TRUE,prompt=TRUE,comment=NA, fig.width=4, fig.height=3>>=
+qqnorm(rstandard(modelo_log))
+qqline(rstandard(modelo_log))
+@
+}
+
+The plot suggests there is no normality. We can confirm this observation with a Kolmogorov-Smirnov test.
+
+{\footnotesize
+<<echo=TRUE,prompt=TRUE,comment=NA>>=
+ks.test(rstandard(modelo_log), "pnorm")
+@
+}
+
+The resulting p-value is small enough to reject the null hypothesis of normality (which is possible even if the model is perfectly correct \cite{garcia2023notes}). 
+Now, we proceed with the identification and deletion of potential outliers. We first take a look at the standardised residuals plot. 
+
+{\footnotesize
+<<echo=TRUE,prompt=TRUE,comment=NA, fig.width=4, fig.height=3>>=
+plot(rstandard(modelo_log), main='Standardized residuals per observation', 
+     xlab='Observation number', ylab='Standardized residuals', pch=21, bg='cyan')
+@
+}
+
+We observe a random pattern, which suggests that the residuals may be independent.
+We can also identify quite a few outliers here. With a threshold of $2.5$, we visually separate the outliers with the greatest residuals.
+
+{\footnotesize
+<<echo=TRUE,prompt=TRUE,comment=NA, fig.width=4, fig.height=3>>=
+plot(rstandard(modelo_log), main='Standardized residuals per observation', 
+     xlab='Observation number', ylab='Standardized residuals', pch=21, bg='cyan')
+abline(h=-2.5, col=2)
+abline(h=-3, col=3)
+abline(h=2.5, col=2)
+abline(h=3, col=3)
+@
+}
+
+Next, we calculate their total number. 
+
+{\footnotesize
+<<echo=TRUE,prompt=TRUE,comment=NA>>=
+outliers <- which(abs(rstandard(modelo_log)) > 2.5)
+length(outliers)
+@
+}
+
+Now, we create another dataset without outliers and fit the model once more. 
+
+{\scriptsize
+<<echo=TRUE,prompt=TRUE,comment=NA>>=
+heart2 <- heart[-outliers, ]
+# Modelo con todas las variables como predictores
+modelo_log <- glm(class ~ ., data = heart2, family = binomial)
+# Resumen del modelo
+summary(modelo_log)
+@
+}
+
+The summary shows that the AIC has dropped from $230$ to $196$, which is a considerable improvement. To measure it's predictive performance, we calculate its accuracy.
+
+{\footnotesize
+<<echo=TRUE,prompt=TRUE,comment=NA>>=
+probabilidades <- predict(modelo_log, type = "response")
+pred_clase <- ifelse(probabilidades >= 0.5, 1, 0)
+real <- heart2$class
+
+accuracy <- mean(pred_clase == real)
+print(paste("Accuracy:", round(accuracy, 4)))
+@
+}
+
+There is a small improvement in accuracy, it has gone up from $0.87$ to $0.88$.
+
+\subsection{Possible model simplification}
+Finally, we attempt to to simplify the model using a stepwise algorithm. 
+
+{\footnotesize
+<<echo=TRUE,prompt=TRUE,comment=NA, results = "hide">>=
+step_model <- step(modelo_log, direction='both')
+@
+}
+
+{\scriptsize
+<<echo=TRUE,prompt=TRUE,comment=NA>>=
+summary(step_model)
+@
+}
+
+We obtain a simpler model with $9$ predictors (instead of the previous $14$), most of which are statistically significant. 
+The summary also shows a slight improvement in model fit, as the AIC has decreased to $190$.

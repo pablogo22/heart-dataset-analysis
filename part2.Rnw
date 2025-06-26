@@ -1,0 +1,85 @@
+\section{The dataset}
+
+As mentioned in the introduction, we are working with the UCI Heart Disease dataset. 
+It consists of $14$ variables measured on $297$ patients. Although the original dataset contains $303$ instances,
+the version available in the \textit{kmed} R package excludes $6$ patients due to missing values. 
+The full dataset can be accessed in \cite{heartdataset}. The most important variable is \texttt{class}, 
+which indicates whether a patient has heart disease. Originally, this variable has five levels (from $0$ to $4$), 
+but it can be simplified into a binary outcome by recoding values greater than $0$ as $1$.
+
+This dataset is particularly interesting, as it allows us to apply many of the concepts learned throughout the course in a context that is both meaningful and practical: detecting heart disease. As evidence of its relevance, the dataset has received a total of $64$ citations and over $775000$ views on \cite{heartdataset}. It has been used in various studies employing a wide range of models and algorithms, such as Agglomerative Clustering \cite{agglomerative} and privacy-preserving clinical decision-making with cloud support \cite{privacy}.
+
+After introducing the dataset, we load the \texttt{kmed} library, which contains the data, and verify that it matches the description previously provided:
+
+\begin{scriptsize}
+<<echo=TRUE,prompt=TRUE,comment=NA, warning=FALSE>>=
+library(kmed)
+str(heart)
+@
+\end{scriptsize}
+
+Now, we apply the transformation mentioned earlier, converting the original four-class response variable into a binary one:
+
+\begin{footnotesize}
+<<echo=TRUE,prompt=TRUE,comment=NA>>=
+heart$class <- ifelse(heart$class > 0, 1, 0)
+unique(heart$class)
+@
+\end{footnotesize}
+
+Even though the dataset is expected to exclude missing values, we perform a check to confirm that no missing data remains:
+
+\begin{footnotesize}
+<<echo=TRUE,prompt=TRUE,comment=NA>>=
+colSums(is.na(heart))
+@
+\end{footnotesize}
+
+\section{The model}
+The model we are implementing is the logistic regression. At first, we are going to provide the mathematical formulation of the model and, lately, the explanation of the assumptions made for it.
+
+Suppose $Y$ is a Bernoulli variable and $X_1,...,X_p$ are predictors associated to $Y$. Our goal is to model the conditional expectation: 
+$$\mathbb{E}[Y \mid X_1=x_1,\dots,X_p=x_p] = \mathbb{P}[Y=1 \mid X_1=x_1,\dots,X_p=x_p]$$ 
+which corresponds to the probability that the outcome is $1$ given the values of the predictors.
+
+Seeing what we want to model, the first natural idea might be to consider a linear regression model:
+$$\mathbb{E}[Y \mid X_1=x_1,\dots,X_p=x_p] = \beta_0+\beta_1x_1+\dots+\beta_px_p=:\eta$$
+
+However, this model is not suitable, as it can produce predicted values outside the $[0,1]$ interval, which is not valid for probabilities. To address this, we consider applying a function that maps $\eta$ to the interval $[0,1]$. Specifically, we use the \textit{logistic function}:
+$$
+\mathbb{P}[Y=1 \mid X_1 = x_1, \dots, X_p = x_p] = \frac{1}{1 + e^{-\eta}}.
+$$
+
+This value represents the model's estimate of the probability that the outcome is $Y = 1$ given the observed inputs.
+To classify the observation, we compare this probability to a threshold, typically $0.5$. The decision rule is:
+
+\begin{itemize}
+  \item If $\mathbb{P}[Y=1 \mid X_1,\dots,X_p] > 0.5$, the model predicts $Y = 1$.
+  \item If $\mathbb{P}[Y=1 \mid X_1,\dots,X_p] \leq 0.5$, the model predicts $Y = 0$.
+\end{itemize}
+
+This threshold-based classification approach allows us to turn the continuous output of the model into a binary decision.
+
+Apart from the model itself, it is also important to understand how the \textit{odds} behave in logistic regression, since the coefficients are directly related to them:
+
+\begin{itemize}
+  \item The quantity $\mathrm{e}^{\beta_0}$ represents the odds of the outcome being $1$ when all the predictor variables are equal to zero.
+  \item For any predictor $X_j$, the value $\mathrm{e}^{\beta_j}$ tells us how much the odds multiply when $X_j$ increases by one unit, assuming all other variables remain constant. More generally, if $X_j$ increases by $r$ units, the odds are multiplied by $(\mathrm{e}^{\beta_j})^r$.
+\end{itemize}
+
+In summary, if $\beta_j > 0$, then $\mathrm{e}^{\beta_j} > 1$, which means increasing $X_j$ leads to higher odds (and thus a higher probability) of the outcome being $1$. If $\beta_j < 0$, then $\mathrm{e}^{\beta_j} < 1$, so increasing $X_j$ decreases the odds and the probability of $Y = 1$.
+
+
+Once all the mathematical foundations behind logistic regression are clear, it is important to explain the assumptions required for using the model, as stated in \cite{garcia2023notes}. 
+There are a total of three assumptions:
+
+\begin{itemize}
+  \item Linearity in the transformed expectation: 
+  $$
+  \mathbb{E}[Y \mid X_1=x_1,\dots,X_p=x_p] = \frac{1}{1+\mathrm{e}^{-\eta}} = \frac{1}{1+\mathrm{e}^{-(\beta_0+\beta_1x_1+\dots+\beta_px_p)}}
+  $$
+  \item $Y_1,\dots,Y_n$ are independent, conditionally on $X_1,\dots,X_n$.
+  \item The response distribution must be: 
+  $$Y \mid (X_1=x_1,\dots,X_p=x_p) \sim Ber\left(\frac{1}{1+\mathrm{e}^{-\eta}}\right)$$
+\end{itemize}
+

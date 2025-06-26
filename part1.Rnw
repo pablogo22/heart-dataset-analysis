@@ -1,0 +1,10 @@
+% !Rnw root = Coursework.Rnw
+
+\section{Introduction}
+
+This project focuses on using logistic regression to analyze the UCI Heart Disease dataset. Our goal is to understand which patient factors are linked to the presence of heart disease and to build a model that can help predict it. Since the response variable is binary (disease or no disease), linear regression can not be applied, so logistic regression is a suitable choice in this case.
+
+The topic connects directly to what we have learned in our Computational Statistics course, especially in the areas of regression modeling and prediction. Also we refer to the work of \cite{garcia2023notes}, \textit{Notes for Predictive Modeling}, to guide our model building and model diagnostics.
+
+The dataset is interesting because it has real-world relevance and allows us to apply statistical tools to a health-related problem. It also gives us the chance to explore key steps in data analysis, such as variable selection, checking model assumptions, and interpreting results clearly.
+

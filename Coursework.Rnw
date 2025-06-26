@@ -1,0 +1,81 @@
+\documentclass[12pt]{article}
+\usepackage{url}
+\usepackage{breakurl}
+\usepackage{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{fancyhdr}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{amsfonts}
+\usepackage[numbers]{natbib}
+\usepackage{float}
+\usepackage{xspace}
+
+\newcommand{\pbox}[1]{\vskip 0.2cm \fbox{\parbox{0.99\linewidth}{\color{blue}{#1}}} \vskip 0.2cm}
+\renewcommand\familydefault{\sfdefault}
+\setlength{\headheight}{14.49998pt}
+
+\textwidth 16cm
+\evensidemargin 0.2cm
+\oddsidemargin  0.2cm
+\topmargin -0.2cm
+\textheight 22cm
+\usepackage{fancyhdr}  % Paquete para personalizar encabezados
+
+\pagestyle{fancy}
+\fancyhf{}  % Elimina todos los encabezados y pies de página por defecto
+\fancyhead[LE]{Group coursework}
+\fancyhead[RO]{Group coursework}
+\fancyfoot[R]{\thepage}  % Muestra el número de página a la derecha del pie de página
+
+\parindent=0in
+\parskip=4pt
+
+\title{\vspace{3cm} {\Large \textbf{Group coursework}} \\ {\large \textbf{Computational Statistics}} \\ {\large Undergraduate degree in Mathematics, 2024-25 \\ University of Granada} }
+\author{Pablo G\'alvez Ortigosa \\ Mario Megías Mateo \\ José Luis Mera Cardoso \\ Eduardo Rodríguez Cao }
+\date{\today}
+\renewcommand{\baselinestretch}{1.3}
+
+\begin{document}
+
+<<setup, include=FALSE, cache=FALSE>>=
+Sys.setenv(lang = "en_UK")
+library(knitr)
+# set global chunk options
+opts_chunk$set(fig.align='center', fig.show='hold')
+options(formatR.arrow=TRUE,width=70)
+@
+
+\maketitle
+
+\newpage
+\tableofcontents
+
+\newpage
+
+
+<<test, child='part1.Rnw'>>=
+@
+
+<<test, child='part2.Rnw'>>=
+@
+
+<<test, child='part3.Rnw'>>=
+@
+
+<<test, child='part4.Rnw'>>=
+@
+
+\newpage
+<<test, child='part5.Rnw'>>=
+@
+
+\newpage
+\bibliographystyle{plainnat}
+\bibliography{biblio}
+
+
+\end{document}
+
+
